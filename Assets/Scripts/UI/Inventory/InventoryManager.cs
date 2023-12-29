@@ -7,6 +7,8 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
+using Unity.VisualScripting;
+using UnityEngine.InputSystem.LowLevel;
 
 /// <summary> Primary user interface manager. </summary>
 public class InventoryManager : MonoBehaviour
@@ -154,7 +156,8 @@ public class InventoryManager : MonoBehaviour
          * be called.
          */
         
-        
+        mItemCreateButton = itemDetails.Q<Button>("ItemDetailButtonCreate");
+        mItemCreateButton.clicked += () => CreateItem();
         
         
         await UniTask.WaitForEndOfFrame();
@@ -389,11 +392,19 @@ public class InventoryManager : MonoBehaviour
         
         if (item == null)
         { // We have no item selected -> Provide some default information.
+            mItemDetailName.text = "Name";
+            mItemDetailDescription.text = "";
+            mItemDetailCost.text = "0";
+            mItemCreateButton.SetEnabled(false);
         }
         else
         { // We have item selected -> Use the item information.
+            mItemDetailName.text = item.definition.name;
+            mItemDetailDescription.text = item.definition.readableDescription;
+            mItemDetailCost.text = item.definition.cost.ToString();
+            mItemCreateButton.SetEnabled(item.definition.cost <= availableCurrency);
         }
-        
+
         selectedItem = item;
     }
 
@@ -426,6 +437,13 @@ public class InventoryManager : MonoBehaviour
          */
         
         var itemDefinition = selectedItem?.definition;
+
+        if(selectedItem != null){
+            if(itemDefinition.cost <= availableCurrency){
+                Instantiate(itemDefinition.prefab,new Vector3(0, 5, 0), Quaternion.identity);
+                availableCurrency -= itemDefinition.cost;
+            }
+        }
         
         return false;
     }
